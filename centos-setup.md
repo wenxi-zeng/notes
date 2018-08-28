@@ -111,6 +111,65 @@ Remember to add the user to administrator group when create an user.
     |             |                   |             | vnet1      |
     | virbr0      | 8000.5254006ad49e | yes         | virbr0-nic |
 
+## Setup VM
+
+1. Install KVM
+    
+    ```bash
+    yum install qemu-kvm libvirt libvirt-python libguestfs-tools virt-install
+    ```
+
+2. Start the libvirtd service
+
+    ```bash
+    systemctl enable libvirtd
+    systemctl start libvirtd
+    ```
+
+3. Verify kvm installation. Make sure KVM module loaded using lsmod command and grep command.
+
+    ```bash
+    lsmod | grep -i kvm
+    ```
+
+### Create VM via commandline
+
+1. Direct to /var/lib/libvirt/images, and download CentOS image from web.
+
+    ```bash
+    cd /var/lib/libvirt/images
+    wget http://mirror.trouble-free.net/centos/7/isos/x86_64/CentOS-7-x86_64-Minimal-1804.iso
+    ```
+
+2. Use <code>virt-install</code> to create VM
+
+    ```bash
+    virt-install \
+    --virt-type=kvm \
+    --name centos7 \
+    --ram 2048 \
+    --vcpus=1 \
+    --os-variant=centos7.0 \    
+    --cdrom=/var/lib/libvirt/boot/CentOS-7-x86_64-Minimal-1804.iso \
+    --network=bridge=br0,model=virtio \
+    --graphics vnc \
+    --disk path=/var/lib/libvirt/images/centos7.qcow2,size=40,bus=virtio,format=qcow2
+    ```
+
+### Create VM via virt-manager
+
+1. Install virt-manager
+
+    ```bash
+    yum install virt-manager
+    ```
+
+2. Start virt-manager and create VM
+
+    ```bash
+    virt-manager
+    ```
+
 
 ## References
 Setup network: https://lintut.com/how-to-setup-network-after-rhelcentos-7-minimal-installation/
@@ -119,4 +178,8 @@ Setup UI:https://www.itzgeek.com/how-tos/linux/centos-how-tos/install-gnome-gui-
 
 Bridge network:
 https://wiki.libvirt.org/page/Networking#Bridged_networking_.28aka_.22shared_physical_device.22.29
+
+Create VM:
+https://www.cyberciti.biz/faq/how-to-install-kvm-on-centos-7-rhel-7-headless-server/
+https://www.linuxtechi.com/install-kvm-hypervisor-on-centos-7-and-rhel-7/
 
