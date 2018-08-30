@@ -37,7 +37,15 @@ Remember to add the user to administrator group when create an user.
     ```bash
     service network restart
     ```
-    
+
+4. Forwarding external port to port 22 manually. This setup is not necessary if the router has the capability of forwarding ports.
+
+    ```bash
+    firewall-cmd --zone=public --add-masquerade --permanent
+    firewall-cmd --zone=public --add-forward-port=port=6301:proto=tcp:toport=22 --permanent
+    firewall-cmd --reload
+    ```
+
 ## Setup UI (if CentOS minimal)
 
 1. List available package groups
