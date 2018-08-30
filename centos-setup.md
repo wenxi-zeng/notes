@@ -1,5 +1,22 @@
 # CentOS Setup
 
+- [CentOS Setup](#centos-setup)
+    - [Install CentOS with a flash drive](#install-centos-with-a-flash-drive)
+    - [Setup network](#setup-network)
+    - [Setup UI (if CentOS minimal)](#setup-ui-if-centos-minimal)
+    - [Bridge network](#bridge-network)
+    - [Setup VM](#setup-vm)
+        - [Option 1: Create VM via commandline](#option-1-create-vm-via-commandline)
+        - [Option 2: Create VM via virt-manager](#option-2-create-vm-via-virt-manager)
+    - [Setup network for VM](#setup-network-for-vm)
+    - [Setup UI for VM](#setup-ui-for-vm)
+    - [Clone VMs](#clone-vms)
+        - [Option 1: clone VM via commandline](#option-1-clone-vm-via-commandline)
+        - [Option 2: clone VM via virt-manager](#option-2-clone-vm-via-virt-manager)
+    - [Change IP address for cloned machine](#change-ip-address-for-cloned-machine)
+    - [Check connectivity](#check-connectivity)
+    - [References](#references)
+
 ## Install CentOS with a flash drive
 Remember to add the user to administrator group when create an user.
 
@@ -132,7 +149,7 @@ Remember to add the user to administrator group when create an user.
     lsmod | grep -i kvm
     ```
 
-### Create VM via commandline
+### Option 1: Create VM via commandline
 
 1. Direct to /var/lib/libvirt/images, and download CentOS image from web.
 
@@ -156,7 +173,19 @@ Remember to add the user to administrator group when create an user.
     --disk path=/var/lib/libvirt/images/centos7.qcow2,size=40,bus=virtio,format=qcow2
     ```
 
-### Create VM via virt-manager
+3. Intall virt-viewer
+
+    ```bash
+    yum install virt-viewer
+    ```
+
+4. Launch VM with virt-viewer
+
+    ```bash
+    virt-viewer --domain-name VMName
+    ```
+
+### Option 2: Create VM via virt-manager
 
 1. Install virt-manager
 
@@ -164,12 +193,90 @@ Remember to add the user to administrator group when create an user.
     yum install virt-manager
     ```
 
-2. Start virt-manager and create VM
+2. Start virt-manager
 
     ```bash
     virt-manager
     ```
 
+3. Follow the UI instructions to create VM
+
+
+## Setup network for VM
+
+1. Repeat the process of [Setup network](#setup-network) to setup network for VM.
+
+2. Open ifcfg-em1 (or ifcfg-eth0 depending on what ethernet card you have) in /etc/sysconfig/network-scripts. Make the following changes. **NOTE:** Unlike the step described in [Bridge network](#bridge-network), the change of ifcfg-em1 (or ifcfg-eth0) do not need a bridge.
+
+    ```bash
+    TYPE=Ethernet
+    PROXY_METHOD=none
+    BROWSER_ONLY=no
+    BOOTPROTO=static        <---------- change dhcp to static is important
+    #DEFROUTE=yes
+    #IPV4_FAILURE_FATAL=no
+    IPV6INIT=yes
+    IPV6_AUTOCONF=yes
+    #IPV6_DEFROUTE=yes
+    #IPV6_FAILURE_FATAL=no
+    #IPV6_ADDR_GEN_MODE=stable-privacy
+    NAME=eth0
+    UUID=a71e47e3-8622-459b-b9b3-a1b41f93fa64
+    DEVICE=eth0
+    ONBOOT=yes
+    IPADDR=192.168.29.192   <------------ assign an address for VM
+    NETMASK=255.255.255.0
+    GATEWAY=192.168.29.1
+    DNS1=192.168.29.1
+    ``` 
+
+## Setup UI for VM
+
+Repeat the process of [Setup UI](#setup-ui-if-centos-minimal) to setup UI for VM. **NOTE:** again this step is only needed if use CentOS minimal.
+
+## Clone VMs
+
+### Option 1: clone VM via commandline
+
+Using <code>virt-clone</code> to clone a guest. **NOTE:** Before proceeding with cloning, shut down the virtual machine.
+
+```bash
+virt-clone --original srcVMName --name newVMName --auto-clone
+```
+
+### Option 2: clone VM via virt-manager
+
+Refer to this [link](https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/7/html/virtualization_deployment_and_administration_guide/cloning-a-vm) for clone VM via GUI.
+
+## Change IP address for cloned machine
+
+1. If you are using commandline, first, run <code>virt-viewer</code> to launch the cloned VM.
+
+```bash
+virt-viewer --domain-name newVMName
+```
+
+2. Open ifcfg-em1 (or ifcfg-eth0 depending on what ethernet card you have) in /etc/sysconfig/network-scripts, and modify the value of IPADDR.
+
+3. Restart network service
+
+    ```bash
+    service network restart
+    ```
+
+## Check connectivity
+
+1. Check connectivity to host machine. Use the <code>router address </code>
+
+    ```bash
+    ssh -p 6701 alien@10.176.68.171
+    ```
+
+2. Check connectivity to guest machine. Use the <code>static address</code> that assigned to each machine.
+
+    ```bash
+    ssh alien1@192.168.29.192
+    ```
 
 ## References
 Setup network: https://lintut.com/how-to-setup-network-after-rhelcentos-7-minimal-installation/
@@ -183,3 +290,4 @@ Create VM:
 https://www.cyberciti.biz/faq/how-to-install-kvm-on-centos-7-rhel-7-headless-server/
 https://www.linuxtechi.com/install-kvm-hypervisor-on-centos-7-and-rhel-7/
 
+Clone VM: https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/7/html/virtualization_deployment_and_administration_guide/cloning-a-vm
